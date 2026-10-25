@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shopping Garden Game - Pixel Edition</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#4CAF50">
+    <style>
+        /* СТИЛЬ MINECRAFT/TERRARIA */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Courier New', Courier, monospace; 
+            font-weight: bold;
+            overflow: hidden;
+            user-select: none;
+            image-rendering: pixelated;
+            background-color: #222;
+        }
+
+        #start-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1605806616949-1e87b487cb2a?auto=format&fit=crop&w=1200&q=80') no-repeat center center;
+            background-size: cover;
+            position: absolute;
+            z-index: 100;
+        }
+
+        #start-screen h1 {
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 24px;
+            text-shadow: 4px 4px 0px #000;
+            margin-bottom: 50px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .btn-play {
+            padding: 15px 40px;
+            font-size: 24px;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            background: #4CAF50;
+            border: 4px solid #fff;
+            border-bottom: 8px solid #2E7D32;
+            border-right: 8px solid #2E7D32;
+            border-radius: 0;
+            cursor: pointer;
+            text-shadow: 2px 2px 0px #000;
+            transition: transform 0.1s;
+        }
+
+        .btn-play:active {
+            transform: translateY(4px) translateX(4px);
+            border-bottom: 4px solid #2E7D32;
+            border-right: 4px solid #2E7D32;
+        }
+
+        #game-screen {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 4px solid #555;
+            position: absolute;
+            top: 0;
+            width: 100%;
+            box-sizing: border-box;
+            z-index: 10;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .side-menu {
+            position: absolute;
+            left: 15px;
+            top: 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .icon-btn {
+            background: #8D6E63;
+            color: white;
+            border: 3px solid #D7CCC8;
+            border-bottom: 6px solid #4E342E;
+            border-right: 6px solid #4E342E;
+            padding: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 12px;
+            width: 70px;
+            text-shadow: 1px 1px 0px #000;
+        }
+        .icon-btn:active { transform: translateY(3px) translateX(3px); border-bottom-width: 3px; border-right-width: 3px; }
+
+        #biome-container {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-evenly;
+            padding-bottom: 40px;
+            background-size: cover;
+            background-position: center bottom;
+            position: relative;
+            transition: background 0.5s ease;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .forest { background: url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=800&q=50') center bottom; filter: contrast(1.2) saturate(1.2); }
+        .meadow { background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=50') center bottom; filter: contrast(1.2) saturate(1.5); }
+        .mountains { background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=800&q=50') center bottom; filter: grayscale(0.5) contrast(1.3); }
+        .village { background: url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&q=50') center bottom; filter: sepia(0.3) saturate(1.4); }
+        .city { background: url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=50') center bottom; filter: contrast(1.1); }
+
+        #plants-container {
+            display: flex;
+            width: 100%;
+            max-width: 900px;
+            justify-content: space-around;
+            align-items: flex-end;
+            z-index: 5;
+            padding: 0 10px;
+            box-sizing: border-box;
+            transition: filter 0.3s;
+        }
+
+        .plant-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            position: relative;
+            flex-shrink: 0;
+            width: 22%;
+            max-width: 120px;
+        }
+
+        .plant-wrapper:hover { transform: scale(1.05); }
+
+        .plant-label {
+            text-align: center;
+            font-size: 11px;
+            color: white;
+            background: rgba(0,0,0,0.6);
+            border: 2px solid #000;
+            padding: 4px;
+            margin-bottom: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            text-shadow: 1px 1px 0px #000;
+        }
+
+        .plant-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            width: 100%;
+            max-height: 220px;
+            transition: height 0.5s ease-out;
+        }
+
+        .nav-arrows {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .arrow-btn {
+            pointer-events: auto;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            border: 3px solid #777;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 12px 16px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        .arrow-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        #locked-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 8;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            color: white;
+        }
+
+        #locked-overlay h2 { font-size: 24px; font-family: 'Press Start 2P', cursive; text-shadow: 2px 2px 0 #000; margin-bottom: 20px; line-height: 1.4; }
+        #locked-overlay p { font-size: 16px; background: #333; padding: 20px; border: 4px solid #555; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+
+        .modal-content {
+            background: #c6c6c6;
+            border: 4px solid #fff;
+            border-bottom: 4px solid #555;
+            border-right: 4px solid #555;
+            padding: 20px;
+            position: relative;
+            width: 90%;
+            max-width: 440px;
+            text-align: center;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: -15px; right: -15px;
+            background: #f44336;
+            color: white;
+            border: 3px solid #fff;
+            border-bottom: 3px solid #aa2e25;
+            border-right: 3px solid #aa2e25;
+            width: 40px; height: 40px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        .upgrade-boxes {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .upgrade-box {
+            background: #8b8b8b;
+            border: 3px solid #fff;
+            border-bottom: 3px solid #333;
+            border-right: 3px solid #333;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+            text-shadow: 1px 1px 0 #000;
+        }
+        .upgrade-box:active { border: 3px solid #333; border-bottom: 3px solid #fff; border-right: 3px solid #fff; }
+
+        #cooldown-overlay {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #000;
+            color: #FFEB3B;
+            padding: 10px 20px;
+            border: 2px solid #FFEB3B;
+            font-weight: bold;
+            font-size: 14px;
+            z-index: 150;
+            font-family: 'Courier New', monospace;
+        }
+
+        .flying-item {
+            position: fixed;
+            font-size: 32px;
+            z-index: 300;
+            pointer-events: none;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @media (max-height: 600px) {
+            .plant-label { font-size: 9px; padding: 2px; }
+            .side-menu { top: 50px; left: 10px; gap: 5px; }
+            .icon-btn { padding: 4px; font-size: 10px; width: 65px; }
+            .header { padding: 5px 15px; font-size: 13px; }
+            #biome-container { padding-bottom: 25px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>SHOPPING<br>GARDEN<br>GAME</h1>
+        <button class="btn-play" onclick="startGame()">ИГРАТЬ</button>
+    </div>
+
+    <div id="game-screen">
+        <div class="header">
+            <div id="biome-title">БИОМ: ЛЕС</div>
+            <div id="balance-display" style="color: #FFEB3B;">$ 5</div>
+        </div>
+
+        <div class="side-menu">
+            <div class="icon-btn" onclick="openModal('how-to-play-modal')">❓<br>ГАЙД</div>
+            <div class="icon-btn" onclick="openModal('pwa-modal')">📱<br>СКАЧАТЬ</div>
+            <div class="icon-btn" onclick="resetGame()" style="background: #d32f2f;">🔄<br>ВАЙП</div>
+        </div>
+
+        <div class="nav-arrows">
+            <button class="arrow-btn" id="btn-prev" onclick="changeBiome(-1)">&#10094; НАЗАД</button>
+            <button class="arrow-btn" id="btn-next" onclick="changeBiome(1)">ВПЕРЕД &#10095;</button>
+        </div>
+
+        <div id="biome-container" class="forest">
+            <div id="locked-overlay">
+                <h2 id="locked-title">ТЕКУЩИЙ БИОМ: ГОРОД</h2>
+                <p>Вырастите до максимума (50см) все растения в предыдущем биоме, чтобы разблокировать эту локацию!</p>
+            </div>
+            <div id="plants-container"></div>
+        </div>
+    </div>
+
+    <div id="cooldown-overlay">Кулдаун: 8.0с</div>
+
+    <div id="upgrade-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('upgrade-modal')">X</button>
+            <h2 id="upgrade-title" style="color: #333; margin-top: 10px;">АПГРЕЙД</h2>
+            <div class="upgrade-boxes">
+                <div class="upgrade-box" onclick="buyUpgrade(2, 2, 2, 20)">
+                    <div>
+                        <b>+2 СМ</b><br>
+                        <span id="upg-desc-2" style="color: #ddd; font-size: 12px;">(+2 предм = 20 $)</span>
+                    </div>
+                    <span style="font-weight: bold; background: #4CAF50; padding: 6px; color: white;">2$</span>
+                </div>
+                <div class="upgrade-box" onclick="buyUpgrade(4, 4, 4, 40)">
+                    <div>
+                        <b>+4 СМ</b><br>
+                        <span id="upg-desc-4" style="color: #ddd; font-size: 12px;">(+4 предм = 40 $)</span>
+                    </div>
+                    <span style="font-weight: bold; background: #4CAF50; padding: 6px; color: white;">4$</span>
+                </div>
+                <div class="upgrade-box" onclick="buyUpgrade(5, 5, 5, 50)">
+                    <div>
+                        <b>+5 СМ</b><br>
+                        <span id="upg-desc-5" style="color: #ddd; font-size: 12px;">(+5 предм = 50 $)</span>
+                    </div>
+                    <span style="font-weight: bold; background: #4CAF50; padding: 6px; color: white;">5$</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pwa-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('pwa-modal')">X</button>
+            <h2 style="color: #333; margin-top: 10px;">НА ЭКРАН</h2>
+            <div style="text-align: left; font-size: 14px; line-height: 1.6; color: #333; font-weight: bold;">
+                <p>Играйте как в приложение!</p>
+                <p><b>🍏 iPhone (Safari):</b><br>1. Кнопка «Поделиться»<br>2. «На экран "Домой"»</p>
+                <p><b>🤖 Android (Chrome):</b><br>1. Меню (три точки)<br>2. «Добавить на гл. экран»</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="how-to-play-modal" class="modal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('how-to-play-modal')">X</button>
+            <h2 style="color: #333; margin-top: 10px;">КАК ИГРАТЬ</h2>
+            <p style="text-align: left; font-size: 14px; line-height: 1.5; color: #333; font-weight: bold;">
+                1. Кликай на блоки растений.<br><br>
+                2. Покупай апгрейды. С них падают лут и монеты.<br><br>
+                <b>КД покупок: 8 секунд.</b><br><br>
+                3. Максимальный рост — 50 см.<br><br>
+                4. Вырасти всё в биоме для открытия следующего!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const biomesData = [
+            { id: 'forest', name: 'ЛЕС' },
+            { id: 'meadow', name: 'ПОЛЯНА' },
+            { id: 'mountains', name: 'ГОРЫ' },
+            { id: 'village', name: 'ДЕРЕВНЯ' },
+            { id: 'city', name: 'ГОРОД' }
+        ];
+
+        const itemNames = {
+            'Яблоня': ['яблока', 'яблок', '🍎'],
+            'Груша': ['груши', 'груш', '🍐'],
+            'Ель': ['шишки', 'шишек', '🌲'],
+            'Куст': ['ягоды', 'ягод', '🍒'],
+            'Клумба': ['цветка', 'цветов', '🌸'],
+            'Дерево': ['листа', 'листьев', '🍃'],
+            'Одуванчик': ['семени', 'семян', '🌼'],
+            'Ромашка': ['цветка', 'цветов', '💮'],
+            'Подсолнух': ['семечки', 'семечек', '🌻'],
+            'Мох': ['куска мха', 'кусков мха', '🌿'],
+            'Сосна': ['ветки', 'веток', '🌲'],
+            'Кедр': ['ореха', 'орехов', '🌰'],
+            'Пшеница': ['снопа', 'снопов', '🌾'],
+            'Морковь': ['морковки', 'морковок', '🥕'],
+            'Тыква': ['тыквы', 'тыкв', '🎃']
+        };
+
+        const defaultPlants = [
+            [ { name: 'Куст', size: 0 }, { name: 'Ель', size: 0 }, { name: 'Груша', size: 0 }, { name: 'Яблоня', size: 0 } ],
+            [ { name: 'Одуванчик', size: 0 }, { name: 'Ромашка', size: 0 }, { name: 'Куст', size: 0 }, { name: 'Подсолнух', size: 0 } ],
+            [ { name: 'Мох', size: 0 }, { name: 'Сосна', size: 0 }, { name: 'Ель', size: 0 }, { name: 'Кедр', size: 0 } ],
+            [ { name: 'Пшеница', size: 0 }, { name: 'Морковь', size: 0 }, { name: 'Тыква', size: 0 }, { name: 'Яблоня', size: 0 } ],
+            [ { name: 'Клумба', size: 0 }, { name: 'Куст', size: 0 }, { name: 'Дерево', size: 0 }, { name: 'Яблоня', size: 0 } ]
+        ];
+
+        let state = {
+            balance: 5,
+            currentBiome: 0,
+            biomesUnlocked: [true, false, false, false, false],
+            plants: JSON.parse(JSON.stringify(defaultPlants)),
+            lastUpgradeTime: 0 
+        };
+
+        let currentUpgradePlant = 0;
+        let cooldownInterval = null;
+
+        function loadState() {
+            const saved = localStorage.getItem('shoppingGardenStatePixel');
+            if (saved) {
+                state = JSON.parse(saved);
+                state.lastUpgradeTime = 0;
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem('shoppingGardenStatePixel', JSON.stringify(state));
+        }
+
+        function resetGame() {
+            if (confirm("Вайпнуть мир? Весь прогресс удалится!")) {
+                localStorage.removeItem('shoppingGardenStatePixel');
+                location.reload();
+            }
+        }
+
+        // НОВАЯ ФУНКЦИЯ ДЛЯ ФИКСА БАГОВ
+        function checkBiomeComplete() {
+            let unlockedNew = false;
+            for (let i = 0; i < biomesData.length - 1; i++) {
+                const currentPlants = state.plants[i];
+                const allMax = currentPlants.every(p => p.size >= 50);
+                
+                if (allMax && !state.biomesUnlocked[i + 1]) {
+                    state.biomesUnlocked[i + 1] = true;
+                    unlockedNew = true;
+                    setTimeout(() => {
+                        alert(`БИОМ ПРОЙДЕН! Вы открыли новую локацию: ${biomesData[i + 1].name}`);
+                        renderGame(); // Обновляем экран после алерта
+                    }, 500);
+                }
+            }
+            if (unlockedNew) {
+                saveState();
+            }
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            loadState();
+            // ВЫЗЫВАЕМ ПРОВЕРКУ СРАЗУ ПРИ ЗАПУСКЕ (лечит софтлоки старых сохранений)
+            checkBiomeComplete();
+            renderGame();
+            updateCooldownDisplay();
+        }
+
+        function renderGame() {
+            document.getElementById('balance-display').innerText = `$ ${state.balance}`;
+            document.getElementById('biome-title').innerText = `БИОМ: ${biomesData[state.currentBiome].name}`;
+            
+            const container = document.getElementById('biome-container');
+            container.className = biomesData[state.currentBiome].id;
+
+            const isLocked = !state.biomesUnlocked[state.currentBiome];
+            const overlay = document.getElementById('locked-overlay');
+            if (isLocked) {
+                overlay.style.display = 'flex';
+                document.getElementById('locked-title').innerText = `БЛОК: ${biomesData[state.currentBiome].name}`;
+                document.getElementById('plants-container').style.display = 'none';
+            } else {
+                overlay.style.display = 'none';
+                document.getElementById('plants-container').style.display = 'flex';
+            }
+
+            document.getElementById('btn-prev').disabled = state.currentBiome === 0;
+            document.getElementById('btn-next').disabled = state.currentBiome === biomesData.length - 1;
+
+            if (!isLocked) renderPlants();
+        }
+
+        function getPlantStyles(name) {
+            const baseStyle = 'border: 3px solid #000; box-shadow: inset -4px -4px 0 rgba(0,0,0,0.3);';
+            let style = '';
+            let hasTrunk = true;
+
+            if (['Ель', 'Сосна', 'Кедр'].includes(name)) {
+                style = `${baseStyle} background: #2E7D32;`;
+            } else if (['Куст', 'Мох', 'Клумба', 'Тыква', 'Одуванчик', 'Ромашка'].includes(name)) {
+                let color = name==='Клумба'?'#E91E63' : name==='Тыква'?'#FF9800' : name==='Одуванчик'?'#FFEB3B' : '#4CAF50';
+                style = `${baseStyle} background: ${color}; height: 100%;`;
+                hasTrunk = false;
+            } else if (name === 'Пшеница' || name === 'Морковь') {
+                style = `${baseStyle} background: ${name==='Пшеница'?'#FFC107':'#FF5722'}; height: 100%; width: 60% !important;`;
+                hasTrunk = false;
+            } else {
+                style = `${baseStyle} background: #4CAF50;`; 
+            }
+            return { style, hasTrunk };
+        }
+
+        function renderPlants() {
+            const container = document.getElementById('plants-container');
+            container.innerHTML = '';
+            const plants = state.plants[state.currentBiome];
+
+            plants.forEach((p, index) => {
+                const percent = p.size / 50; 
+                const height = 45 + (percent * 90); 
+                const { style, hasTrunk } = getPlantStyles(p.name);
+                
+                const trunkHtml = hasTrunk ? `<div style="width: 20px; height: 35%; background: #5D4037; border: 3px solid #000; border-top: none; box-shadow: inset -4px 0 0 rgba(0,0,0,0.3);"></div>` : '';
+
+                container.innerHTML += `
+                    <div class="plant-wrapper" id="plant-${index}" onclick="openUpgrade(${index})">
+                        <div class="plant-label">
+                            АПГРЕЙД<br>
+                            <span style="color: #4CAF50;">${p.name}</span><br>
+                            ${p.size} СМ
+                        </div>
+                        <div class="plant-visual" style="height: ${height}px;">
+                            <div style="width: 100%; height: ${hasTrunk ? '65%' : '100%'}; ${style}"></div>
+                            ${trunkHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function changeBiome(dir) {
+            let next = state.currentBiome + dir;
+            if (next >= 0 && next < biomesData.length) {
+                state.currentBiome = next;
+                renderGame();
+            }
+        }
+
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function openUpgrade(index) {
+            if (!state.biomesUnlocked[state.currentBiome]) return;
+            
+            const now = Date.now();
+            const elapsed = now - state.lastUpgradeTime;
+            if (elapsed < 8000) {
+                alert(`Кулдаун! Жди ещё ${((8000 - elapsed)/1000).toFixed(1)} сек.`);
+                return;
+            }
+
+            currentUpgradePlant = index;
+            const p = state.plants[state.currentBiome][index];
+            document.getElementById('upgrade-title').innerText = `ЛУТ: ${p.name.toUpperCase()}`;
+
+            const itemsText24 = itemNames[p.name][0]; 
+            const itemsText5 = itemNames[p.name][1]; 
+
+            document.getElementById('upg-desc-2').innerText = `(+2 ${itemsText24} = 20$)`;
+            document.getElementById('upg-desc-4').innerText = `(+4 ${itemsText24} = 40$)`;
+            document.getElementById('upg-desc-5').innerText = `(+5 ${itemsText5} = 50$)`;
+
+            openModal('upgrade-modal');
+        }
+
+        function updateCooldownDisplay() {
+            if (cooldownInterval) clearInterval(cooldownInterval);
+
+            const overlay = document.getElementById('cooldown-overlay');
+
+            cooldownInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = now - state.lastUpgradeTime;
+                if (elapsed < 8000) {
+                    overlay.style.display = 'block';
+                    overlay.innerText = `КД: ${((8000 - elapsed)/1000).toFixed(1)}с`;
+                } else {
+                    overlay.style.display = 'none';
+                }
+            }, 100);
+        }
+
+        function buyUpgrade(cm, cost, itemsCount, reward) {
+            const now = Date.now();
+            if (now - state.lastUpgradeTime < 8000) {
+                alert("Кулдаун ещё не прошёл!");
+                return;
+            }
+
+            if (state.balance < cost) {
+                alert("Мало монет!");
+                return;
+            }
+            
+            let p = state.plants[state.currentBiome][currentUpgradePlant];
+            if (p.size >= 50) {
+                alert("Растение максимального уровня (50 см)!");
+                return;
+            }
+
+            state.balance -= cost;
+            p.size = Math.min(50, p.size + cm);
+            state.lastUpgradeTime = now; 
+            
+            document.getElementById('balance-display').innerText = `$ ${state.balance}`;
+            closeModal('upgrade-modal');
+            renderPlants();
+            saveState();
+            updateCooldownDisplay();
+
+            animateDrops(currentUpgradePlant, itemsCount, reward, p.name);
+        }
+
+        function animateDrops(plantIndex, count, totalReward, plantName) {
+            const plantEl = document.getElementById(`plant-${plantIndex}`);
+            const balanceEl = document.getElementById('balance-display');
+            
+            const pRect = plantEl.getBoundingClientRect();
+            const bRect = balanceEl.getBoundingClientRect();
+            const emoji = itemNames[plantName][2];
+
+            let completed = 0;
+
+            for(let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const el = document.createElement('div');
+                    el.className = 'flying-item';
+                    el.innerText = emoji;
+                    el.style.left = (pRect.left + pRect.width / 2 - 15) + 'px';
+                    el.style.top = (pRect.top + pRect.height / 2) + 'px';
+                    document.body.appendChild(el);
+
+                    el.getBoundingClientRect();
+
+                    el.style.left = (bRect.left + 20) + 'px';
+                    el.style.top = (bRect.top + 10) + 'px';
+                    el.style.transform = 'scale(0.5)';
+                    el.style.opacity = '0.3';
+
+                    setTimeout(() => {
+                        el.remove();
+                        completed++;
+                        if (completed === count) {
+                            state.balance += totalReward;
+                            document.getElementById('balance-display').innerText = `$ ${state.balance}`;
+                            saveState();
+                            // ВЫЗЫВАЕМ ПРОВЕРКУ ТУТ (срабатывает, когда анимация успешна завершена)
+                            checkBiomeComplete();
+                        }
+                    }, 800);
+                }, i * 150);
+            }
+        }
+    </script>
+</body>
+</html>
